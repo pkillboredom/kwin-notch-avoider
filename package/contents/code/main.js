@@ -7,11 +7,11 @@
 // 	geometryChanged: { connect: (cb) => setTimeout(cb.bind(null, this), 1000) },	
 // });
 // const workspace = {
-// 	clientArea: () => ({ x: 0, y: 0, width: 3456, height: 2234 }),
-// 	clientFullScreenSet: { connect: registerCallback },
-// 	clientMaximizeSet: { connect: registerCallback },
-// 	clientAdded: { connect: registerCallback },
-// 	clientActivated: { connect: registerCallback },
+// 	windowArea: () => ({ x: 0, y: 0, width: 3456, height: 2234 }),
+// 	windowFullScreenSet: { connect: registerCallback },
+// 	windowMaximizeSet: { connect: registerCallback },
+// 	windowAdded: { connect: registerCallback },
+// 	windowActivated: { connect: registerCallback },
 // 	screenResized: { connect: registerCallback },
 // 	activeClient: getDummyClient(),
 // };
@@ -35,31 +35,31 @@ const isAreaRightScreen = (area) => {
 	return Math.abs(area.width / area.height - screenRatio) < errorMargin;
 }
 
-const isRightScreen = (client) => {
-	const area = workspace.clientArea(KWin.FullScreenArea, client);
+const isRightScreen = (window) => {
+	const area = workspace.clientArea(KWin.FullScreenArea, window);
 	return isAreaRightScreen(area);
 };
 
-const getScale = (client) => {
-	const area = workspace.clientArea(KWin.FullScreenArea, client);
+const getScale = (window) => {
+	const area = workspace.clientArea(KWin.FullScreenArea, window);
 	return area.width / getConfigWidth();
 };
 
-const getRealNotchThickness = (client) => {
+const getRealNotchThickness = (window) => {
 	const notchThickness = getConfigNotchThickness();
-	return Math.round(notchThickness * getScale(client));
+	return Math.round(notchThickness * getScale(window));
 }
 
-const changeYPosIfNecessary = (client) => (() => {
-	if (client.specialWindow || !isRightScreen(client)) return;
+const changeYPosIfNecessary = (window) => (() => {
+	if (window.specialWindow || !isRightScreen(window)) return;
 
-	const area = workspace.clientArea(KWin.FullScreenArea, client);
-	if (client.frameGeometry.y !== area.y) return;
+	const area = workspace.clientArea(KWin.FullScreenArea, window);
+	if (window.frameGeometry.y !== area.y) return;
 
-	const realNotchThickness = getRealNotchThickness(client);
+	const realNotchThickness = getRealNotchThickness(window);
 
-	const newHeight = Math.min(client.frameGeometry.height, area.height - realNotchThickness);
-	client.frameGeometry = { x: client.frameGeometry.x, y: area.y + realNotchThickness, width: client.frameGeometry.width, height: newHeight }
+	const newHeight = Math.min(window.frameGeometry.height, area.height - realNotchThickness);
+	window.frameGeometry = { x: window.frameGeometry.x, y: area.y + realNotchThickness, width: window.frameGeometry.width, height: newHeight }
 });
 
 const callPlasmaScript = (plasmascript) => {
@@ -103,48 +103,40 @@ panel.hiding = "${hiding}";
 	autohidden = autohide;
 };
 
-const connectClient = (client) => {
-	const callback = changeYPosIfNecessary(client);
-	client.geometryChanged.connect(callback);
-	client.fullScreenChanged.connect(() => {
-		// needed because clientFullScreenSet is sometimes not emitted (e.g. firefox)
-		if (client.active) autoHideTaskBar(client.fullScreen);
+const connectClient = (window) => {
+	const callback = changeYPosIfNecessary(window);
+	window.clientGeometryChanged.connect(callback);
+	window.fullScreenChanged.connect(() => {
+		if (window.fullscreen){
+			const area = workspace.clientArea(KWin.FullScreenArea, window);
+
+			const realNotchThickness = getRealNotchThickness(window);
+
+			window.frameGeometry = { x: area.x, y: area.y + realNotchThickness, width: area.width, height: area.height - realNotchThickness }
+		}
+
+		if (window.active)autoHideTaskBar(window.fullScreen);
 	});
+	window.maximizedChanged.connect(() => {
+		if (height != area.height - realNotchThickness || window.specialWindow || !isRightScreen(window)) return;
+
+		const area = workspace.clientArea(KWin.FullScreenArea, window);
+		const realNotchThickness = getRealNotchThickness(window);
+
+		window.frameGeometry = { x: window.frameGeometry.x, y: area.y + realNotchThickness, width: window.frameGeometry.width, height: area.height - realNotchThickness };
+	})
 	callback();
 };
 
-workspace.clientFullScreenSet.connect((client, fullscreen) => {
-	if (!isRightScreen(client) || client.specialWindow) return;
+workspace.windowAdded.connect(connectClient);
+workspace.windowList().forEach(connectClient);
 
-	if (fullscreen) {
-		const area = workspace.clientArea(KWin.FullScreenArea, client);
-
-		const realNotchThickness = getRealNotchThickness(client);
-
-		client.frameGeometry = { x: area.x, y: area.y + realNotchThickness, width: area.width, height: area.height - realNotchThickness }
-	}
-
-	if (client.active) autoHideTaskBar(fullscreen);
-});
-
-workspace.clientMaximizeSet.connect((client, maxH, maxW) => {
-	if (!maxH || client.specialWindow || !isRightScreen(client)) return;
-
-	const area = workspace.clientArea(KWin.FullScreenArea, client);
-	const realNotchThickness = getRealNotchThickness(client);
-
-	client.frameGeometry = { x: client.frameGeometry.x, y: area.y + realNotchThickness, width: client.frameGeometry.width, height: area.height - realNotchThickness };
-});
-
-workspace.clientAdded.connect(connectClient);
-workspace.clientList().forEach(connectClient);
-
-workspace.clientActivated.connect((client) => {
-	const autoHidePanel = isRightScreen(client) && client.fullScreen;
+workspace.windowActivated.connect((window) => {
+	const autoHidePanel = isRightScreen(window) && window.fullScreen;
 	autoHideTaskBar(autoHidePanel);
 });
 
-workspace.screenResized.connect((screenId) => {
+workspace.virtualScreenSizeChanged.connect((screenId) => {
 	const area = workspace.clientArea(KWin.FullScreenArea, screenId, 0);
 	if (!isAreaRightScreen(area)) return;
 
@@ -153,7 +145,7 @@ workspace.screenResized.connect((screenId) => {
 	const realNotchThickness = Math.round(notchThickness * scale);
 	updateTaskbarThickness(realNotchThickness);
 
-	workspace.clientList().forEach(changeYPosIfNecessary);
+	workspace.windowList().forEach(changeYPosIfNecessary);
 });
 
 updateTaskbarThickness();

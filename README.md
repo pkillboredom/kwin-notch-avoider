@@ -1,4 +1,4 @@
-# KWin Script Notch Cut Accommodation for Plasma 5
+# KWin Script Notch Cut Accommodation for Plasma 6
 
 This is a KWin script that automatically resizes all windows so that they're not obstructed by the MacBook's notch and adjusts the taskbar size to match it. It also hides the taskbar when a window is in fullscreen to avoid a conspicuous light at the top of the screen.
 
@@ -54,11 +54,11 @@ make
 And install the script:
 Go to `System Settings > Window Management > KWin Scripts` and click on "Install from file" and select the `notch.kwinscript` file.
 
-4. To enable it, go to `System Settings > Window Management > KWin Scripts` and check `Kwin/Plasma notch avoider`.
+4. To enable it, go to `System Settings > Window Management > KWin Scripts` and check `KWin Notch Avoider`.
 
 ## Configuration
 
-You can configure the script by going to `System Settings > Window Management > KWin Scripts` and clicking on the "Configure" button next to `Kwin/Plasma notch avoider`.
+You can configure the script by going to `System Settings > Window Management > KWin Scripts` and clicking on the "Configure" button next to `KWin Notch Avoider`.
 You can then change the following settings:
 - **Notch Thickness**: The thickness of the notch in real pixels (default: 65, the value found on the M1 MacBook Pro 16"), you can find this value by setting the screen scaling to 100% and changing the taskbar size until it matches the notch.
 - **Main Screen Width**: The width of the main screen in real pixels (default: 3456, the value found on the M1 MacBook Pro 16"), you can find this value in `System Settings > Display and Monitor > Display Configuration`.
@@ -76,14 +76,14 @@ The thickness of the black bar I need to draw onto the wallpaper is 65px * 2000p
 
 If you wish to uninstall the script, you can do so by running:
 ```bash
-kpackagetool5 -t KWin/Script -r notch
+kpackagetool6 -t KWin/Script -r notch
 ```
 or by going to the cloned directory and running:
 ```bash
 make uninstall
 ```
 
-or by going to `System Settings > Window Management > KWin Scripts` and unchecking `Kwin/Plasma notch avoider`, then clicking on "Apply". You can also click on the "Delete" icon to remove the script from your system (then click "Apply").
+or by going to `System Settings > Window Management > KWin Scripts` and unchecking `KWin Notch Avoider`, then clicking on "Apply". You can also click on the "Delete" icon to remove the script from your system (then click "Apply").
 
 ## Troubleshooting
 
