@@ -7,11 +7,11 @@
 // 	geometryChanged: { connect: (cb) => setTimeout(cb.bind(null, this), 1000) },	
 // });
 // const workspace = {
-// 	windowArea: () => ({ x: 0, y: 0, width: 3456, height: 2234 }),
-// 	windowFullScreenSet: { connect: registerCallback },
-// 	windowMaximizeSet: { connect: registerCallback },
-// 	windowAdded: { connect: registerCallback },
-// 	windowActivated: { connect: registerCallback },
+// 	clientArea: () => ({ x: 0, y: 0, width: 3456, height: 2234 }),
+// 	clientFullScreenSet: { connect: registerCallback },
+// 	clientMaximizeSet: { connect: registerCallback },
+// 	clientAdded: { connect: registerCallback },
+// 	clientActivated: { connect: registerCallback },
 // 	screenResized: { connect: registerCallback },
 // 	activeClient: getDummyClient(),
 // };
